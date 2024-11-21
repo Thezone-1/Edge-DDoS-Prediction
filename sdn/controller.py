@@ -47,6 +47,13 @@ class Switch(app_manager.RyuApp):
         ipv4_pkt = pkt.get_protocol(ipv4.ipv4)
         print(ipv4_pkt)
 
+        # TODO: Add model
+        res = model.predict()
+        if res == True:
+            pass
+        else:
+            pass
+
 
         dst = eth.dst
         src = eth.src
