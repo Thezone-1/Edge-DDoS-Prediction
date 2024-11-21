@@ -79,6 +79,7 @@ def train_model(
 ):
     model = model.to(device)
     best_val_loss = float("inf")
+    best_model_path = "best_model.pth"
 
     for epoch in range(num_epochs):
         model.train()
@@ -129,6 +130,14 @@ def train_model(
         print(
             f"Val Loss: {val_loss/len(val_loader):.4f}, Accuracy: {100.*val_correct/val_total:.2f}%"
         )
+
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            torch.save(model.state_dict(), best_model_path)
+            print(f"Best model saved with validation loss: {best_val_loss:.4f}")
+
+    print("Training complete. Best model saved to 'best_model.pth'.")
+    return best_model_path
 
 
 # Example usage
