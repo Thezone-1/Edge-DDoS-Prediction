@@ -3,6 +3,8 @@
 ## Overview
 The setup includes a custom Python-based OpenFlow switch application (`Switch`) and a network topology script (`network-topology.py`) using **Ryu** controller and **Mininet**..
 
+<img width="770" alt="Screenshot 2024-11-22 at 14 16 36" src="https://github.com/user-attachments/assets/4561dc35-7f9e-4047-9390-785521e76fa2">
+
 ---
 
 ## Components
