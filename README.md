@@ -1,5 +1,5 @@
-# Edge-DDos-prediction
-DDos prediction using Transformers in edge computing
+# Edge DDoS Prediction
+DDoS prediction using Transformers in edge computing
 
 ## Transformer-Based DDoS Detection Model Documentation
 
