@@ -8,6 +8,8 @@ from ryu.lib.packet import ipv4, packet
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 
+from sdn.DrDos_model import DDoSTransformer
+
 import torch
 import numpy as np
 import ipaddress
