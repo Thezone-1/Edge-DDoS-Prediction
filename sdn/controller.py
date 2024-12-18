@@ -7,21 +7,69 @@ from ryu.lib.mac import haddr_to_bin
 from ryu.lib.packet import ipv4, packet
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
+
 from sdn.DrDos_model import DDoSTransformer
 
 import torch
 import numpy as np
 import ipaddress
 
-# import torch.nn as nn
+import torch.nn as nn
 # import torch.optim as optim
 # from torch.utils.data import Dataset, DataLoader
 # import pandas as pd
 # import numpy as np
 # from sklearn.preprocessing import StandardScaler
 # from sklearn.model_selection import train_test_split
-# import ipaddress
+import ipaddress
 
+class DDoSTransformer(nn.Module):
+    def __init__(
+        self, input_dim, num_heads=4, num_layers=2, dim_feedforward=128, dropout=0.1
+    ):
+        super(DDoSTransformer, self).__init__()
+
+        # Embedding layer to project input features
+        self.input_projection = nn.Linear(input_dim, dim_feedforward)
+
+        # Positional encoding
+        self.pos_encoder = nn.Sequential(
+            nn.Linear(dim_feedforward, dim_feedforward), nn.ReLU(), nn.Dropout(dropout)
+        )
+
+        # Transformer model
+        self.transformer = nn.Transformer(
+            d_model=dim_feedforward,
+            nhead=num_heads,
+            num_encoder_layers=num_layers,
+            dim_feedforward=dim_feedforward * 2,
+            dropout=dropout,
+            batch_first=True,
+        )
+
+        # Simplified output layer
+        self.output_layer = nn.Linear(
+            dim_feedforward, 2
+        )  # Binary classification: Normal vs DDoS
+
+    def forward(self, x):
+        # Project input
+        x = self.input_projection(x)
+
+        # Add positional encoding
+        x = self.pos_encoder(x)
+
+        # Create a dummy target tensor for transformer (same shape as x)
+        tgt = torch.zeros_like(x)  # Dummy target with same shape
+
+        # Transform using the transformer model
+        x = self.transformer(x, tgt)
+
+        # Get classification output
+        x = x.mean(dim=1) if len(x.shape) > 2 else x
+        x = self.output_layer(x)
+
+        return x
 
 class ModelInference:
     def __init__(self, model_path, device=None):
@@ -109,8 +157,9 @@ class Switch(app_manager.RyuApp):
             # ignore lldp packet
             return
 
+        input_data = []
         ipv4_pkt = pkt.get_protocol(ipv4.ipv4)
-        if ipv4_pkt:
+        if ipv4_pkt is not None:
             dst_ip = ipv4_pkt.dst
             src_ip = ipv4_pkt.src
             dst_ip = self.ip_to_float(dst_ip)
@@ -118,14 +167,14 @@ class Switch(app_manager.RyuApp):
             total_length = ipv4_pkt.total_length
 
             input_data = np.array([dst_ip, src_ip, total_length])
-        print("PACKET", ipv4_pkt)
-        print("INPUT DATA", input_data)
+            print("PACKET", ipv4_pkt)
+            print("INPUT DATA", input_data)
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        # self.device = torch.device('cpu')
-        model_path = "best_model.pth"
-        inference = ModelInference(model_path, self.device)
-        print("INFERENCE", inference.predict(input_data))
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            # self.device = torch.device('cpu')
+            model_path = 'sdn/best_model.pth'
+            inference = ModelInference(model_path, self.device)
+            print("INFERENCE", inference.predict(input_data))
 
         dst = eth.dst
         src = eth.src
